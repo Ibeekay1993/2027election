@@ -66,7 +66,7 @@ Run after `docs/superpowers/plans/2026-10-06-naijapvt-secure-reporting-plan.md` 
 
 **Interfaces:**
 - `GET /v1/elections/:slug/summary` returns `{schemaVersion: 1, generatedAt: ISO timestamp, election: {slug, status}, totals: {sampledPus, reportedPus, verifiedPus, accreditedVoters, validVotes, rejectedBallots, coveragePct|null}, parties: [{code, votes, sharePct|null}], states: [{code, name, reportedPus, verifiedPus, coveragePct|null, parties}], freshness: "fresh"|"stale"}`.
-- `GET /v1/elections/:slug/states/:stateCode` returns that state’s published rollup and LGA counts; `GET /v1/elections/:slug/states/:stateCode/lgas/:lgaCode/wards/:wardCode` returns ward/PU status without rep details.
+- `GET /v1/elections/:slug/states/:stateCode` returns that state’s published rollup and LGA/ward selector data; `GET /v1/elections/:slug/states/:stateCode/lgas/:lgaCode` returns that LGA’s rollup and ward selector data; `GET /v1/elections/:slug/states/:stateCode/lgas/:lgaCode/wards/:wardCode` returns ward/PU status without rep details.
 - `GET /v1/elections/:slug/comparison` returns `{comparisonAvailable, reason, rows: [{stateCode, partyCode, citizenVotes, officialVotes, difference, differencePct|null, band}]}` for published official data only, and only when the reviewed sampling/weighting method is active. Otherwise it returns `comparisonAvailable:false` and a clear reason.
 - `GET /v1/elections/:slug/evidence` returns approved `[{evidenceId, puCode, stateCode, caption}]` only; image bytes require the evidence API from the secure-reporting plan.
 - Summary values are sourced from public rollup views using the publishable key; never use service-role credentials.
@@ -91,12 +91,13 @@ Run after `docs/superpowers/plans/2026-10-06-naijapvt-secure-reporting-plan.md` 
 - `fetchElectionSummary(slug) -> Summary`; `fetchStateSummary(slug, stateCode) -> StateSummary`; `fetchWardResults(slug, stateCode, lgaCode, wardCode) -> WardResults`; `fetchComparison(slug) -> ComparisonRow[]`; `fetchApprovedEvidence(slug) -> EvidenceCard[]`. API types match Task 2 response schemas.
 - Public navigation contains no login wall; representative/admin links are separate and visually secondary.
 
-- [ ] **Step 1: Write browser tests** for anonymous results access, compact homepage section order, loading/empty/stale/error states, state drill-down links, accessible charts/table fallback, and absence of rep PII.
+- [ ] **Step 1: Write browser tests** for anonymous results access, compact homepage section order, leading-party preview sourced only from verified published aggregates, no-winner empty state at zero verified PUs, loading/empty/stale/error states, state→LGA→ward filters and shareable URL state, accessible charts/table fallback, and absence of rep PII.
 - [ ] **Step 2: Run public browser tests**; confirm failure against existing pages before implementing the new data path.
-- [ ] **Step 3: Implement** the results-first civic-editorial homepage and pages in the spec. Use live API data only; explain “verified” and “official” distinctly; remove long repeated story blocks and authentication prompts from public navigation. Add sample/methodology disclosure beside any totals; keep statewide estimates hidden until an approved sampling frame and weight inputs exist.
-- [ ] **Step 4: Add a licensed state-boundary dataset** with source/license/provenance recorded in `data/geo/README.md`; render keyboard-accessible map controls and a state list so map availability is not a dependency.
-- [ ] **Step 5: Run browser tests** with empty, populated, stale, and unavailable API fixtures; verify no path falls back to fake data.
-- [ ] **Step 6: Commit** public pages, map data/provenance, and browser checks.
+- [ ] **Step 3: Implement** the results-first civic-editorial homepage and pages in the spec. The homepage includes a compact ranked preview of leading parties with verified vote totals and share; show no winner when there are no verified results. Use live API data only; explain “verified” and “official” distinctly; remove long repeated story blocks and authentication prompts from public navigation. Add sample/methodology disclosure beside any totals; keep statewide estimates hidden until an approved sampling frame and weight inputs exist.
+- [ ] **Step 4: Add linked State, LGA, and Ward selectors and sortable location columns to the results view.** Each selection narrows the next selector, resets descendant selections when a parent changes, and updates query parameters so a filtered view can be shared. Allow sorting by state, LGA, ward, and PU, with a visible sort direction. Display only published verified totals and PU statuses; retain clear loading, empty, and stale states at every level.
+- [ ] **Step 5: Add a licensed state-boundary dataset** with source/license/provenance recorded in `data/geo/README.md`; render keyboard-accessible map controls and a state list so map availability is not a dependency.
+- [ ] **Step 6: Run browser tests** with empty, populated, stale, and unavailable API fixtures; verify no path falls back to fake data.
+- [ ] **Step 7: Commit** public pages, map data/provenance, and browser checks.
 
 ### Task 4: Add the public Analysis Lab with accessible fallback
 
@@ -107,12 +108,12 @@ Run after `docs/superpowers/plans/2026-10-06-naijapvt-secure-reporting-plan.md` 
 
 **Interfaces:**
 - Consumes only Task 2 published aggregates and Task 3 public state geometry.
-- Produces state map and turnout/margin views only when the relevant validated denominators and sample coverage are present. Otherwise shows a concise unavailable-methodology state.
+- Produces a standalone public analysis page with national/state/LGA/ward scope selection, a leading-party and vote-share view, verified-PU coverage, and turnout/margin views only when the relevant validated denominator and sample coverage are present. Otherwise shows a concise unavailable-methodology state, not invented metrics.
 - National/state projections and confidence intervals remain unavailable until a reviewed sample frame, inclusion probabilities, registered-voter denominators, nonresponse policy, historical baseline, and confidence-interval method are supplied and validated. Do not synthesize these values from the 1% target alone.
 
-- [ ] **Step 1: Write browser tests** for lazy-load, data consistency with results summary, WebGL disabled, reduced motion, keyboard use, missing historical/register data, and 2D/table fallback.
+- [ ] **Step 1: Write browser tests** for scope selection at national/state/LGA/ward, lazy-load, data consistency with results summary and filtered results, WebGL disabled, reduced motion, keyboard use, missing historical/register data, and 2D/table fallback.
 - [ ] **Step 2: Run tests**; confirm missing Analysis Lab behaviors fail before implementation.
-- [ ] **Step 3: Implement** lazy-loaded Three.js state columns and scatter plot; add 2D canvas plus data table fallback and links to state drill-down. Do not add a time-series terrain without a real time series.
+- [ ] **Step 3: Implement** the dedicated Analysis page with linked geography scope selectors, lazy-loaded Three.js state columns and scatter plot; add 2D canvas plus data table fallback and links to the matching results scope. Do not add a time-series terrain without a real time series.
 - [ ] **Step 4: Run browser tests** on WebGL and fallback paths; verify no analysis presents anomaly signals as proof of manipulation.
 - [ ] **Step 5: Commit** Analysis Lab and tests.
 

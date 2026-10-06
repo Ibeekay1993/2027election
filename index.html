@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NaijaPVT — Citizen Election Result Monitoring</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topnav" id="appnav"></header>
+<div class="container">
+  <section class="hero">
+    <h1>Independent monitoring &amp; collation of Nigerian election results — powered by citizens, not government.</h1>
+    <p>NaijaPVT is a private parallel vote tabulation platform. We deploy <strong>multiple trained representatives at each sampled polling unit</strong>. They report results independently and live, upload photographic evidence, and our system cross-checks them against each other before collating — automatically.</p>
+    <p style="margin-top:22px">
+      <a class="btn" href="login.html">Become a Rep</a>
+      <a class="btn ghost" href="results.html" style="margin-left:10px">View Live Collation</a>
+    </p>
+  </section>
+
+  <div class="notice"><strong>Prototype notice:</strong> this demo runs entirely in your browser (data is stored locally). A production version needs a secure backend server, verified rep accounts, and encrypted image storage — see the README included in the package.</div>
+
+  <h2 class="section-title">How it works</h2>
+  <div class="grid c2">
+    <div class="card">
+      <div class="steps">
+        <div class="step"><h3>Recruit &amp; deploy reps</h3><p class="muted">We recruit and vet trained representatives — starting with a 1% sample of Nigeria's polling units, stratified across states, LGAs and wards — and assign <strong>3 reps to each polling unit</strong>, so every result is witnessed and reported independently three times.</p></div>
+        <div class="step"><h3>Live result submission</h3><p class="muted">Each rep types the figures they witnessed (votes per party, accredited voters) and uploads a photograph of the posted result sheet (Form EC8A). Each rep may report <strong>only once</strong> per polling unit.</p></div>
+        <div class="step"><h3>Rep cross-checking</h3><p class="muted">The system automatically compares the 3 reps' figures for the same polling unit. If all three agree → the result is locked as <strong>verified</strong>. If anyone's figures differ → the PU is flagged for your collation team to review the photos and resolve.</p></div>
+        <div class="step"><h3>Automatic collation &amp; comparison</h3><p class="muted">Verified figures roll up automatically into live totals by ward, LGA and state. Our collation is then compared against officially announced results — any mismatch is flagged instantly for investigation.</p></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Why multiple reps per polling unit?</h3>
+      <p class="muted" style="margin-bottom:14px">Three independent reports let the collation team spot differences and review the posted result sheet. Matching reports provide a cross-check; they do not by themselves prove that a result is official or correct.</p>
+      <h3>Platform safeguards</h3>
+      <p class="muted">
+        • 3 reps per polling unit, independent reports compared automatically<br>
+        • One submission per rep — locked after upload<br>
+        • Mandatory photo evidence of the posted result sheet<br>
+        • Timestamped submissions<br>
+        • Reps vetted and trained before deployment<br>
+        • Private platform — not affiliated with INEC or any government body
+      </p>
+      <p style="margin-top:18px"><a class="btn small" href="dashboard.html">Rep Portal →</a></p>
+    </div>
+  </div>
+
+  <h2 class="section-title">Live snapshot</h2>
+  <div class="grid c3" id="snapshot"></div>
+</div>
+<footer>NaijaPVT — a private citizen-election-monitoring initiative. Independent of INEC and all government bodies. Built for transparency, not politics.</footer>
+<script src="js/store.js"></script>
+<script>renderNav("home");
+  const t = tallyConsensus(Object.values(getResults()));
+  document.getElementById("snapshot").innerHTML = `
+    <div class="stat"><div class="num">${fmt(t.pus)}</div><div class="lbl">Polling units reporting</div></div>
+    <div class="stat"><div class="num">${fmt(t.reported)}</div><div class="lbl">Rep reports received</div></div>
+    <div class="stat"><div class="num">${t.agreed}</div><div class="lbl">PUs fully verified (all reps agree)</div></div>`;
+</script>
+</body>
+</html>

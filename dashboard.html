@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rep Dashboard — NaijaPVT</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topnav" id="appnav"></header>
+<div class="container">
+  <div id="gate"></div>
+  <div id="app" style="display:none">
+    <h2 class="section-title" style="margin-top:10px">Submit Polling Unit Result</h2>
+    <div class="notice">Each polling unit has <strong>3 assigned reps</strong>, and each rep may submit <strong>only once</strong>. The system verifies the PU only when all three reports match exactly. Any difference is sent for photo review. Photograph the posted result sheet clearly before submitting.</div>
+    <div id="flash"></div>
+    <div class="grid c2">
+      <div class="card">
+        <h3>Result details</h3>
+        <form id="resultForm">
+          <div class="row">
+            <div><label>State</label><select id="rState"></select></div>
+            <div><label>LGA</label><input id="rLga" placeholder="e.g. Ikeja" required></div>
+          </div>
+          <div class="row">
+            <div><label>Ward</label><input id="rWard" placeholder="e.g. Ward 7" required></div>
+            <div><label>Polling unit name</label><input id="rPuName" placeholder="e.g. PU 012 - St. Finbarr's School" required></div>
+          </div>
+          <label>Polling unit code (shared by your PU team)</label>
+          <input id="rPuCode" placeholder="e.g. LAG-24-07-012" required>
+          <div class="row">
+            <div><label>Accredited voters</label><input id="rAcc" type="number" min="0" required></div>
+            <div><label>Rejected ballots</label><input id="rRej" type="number" min="0" value="0"></div>
+          </div>
+          <h3 style="margin-top:20px;font-size:1rem">Votes per party</h3>
+          <div id="partyInputs"></div>
+          <p class="muted" style="margin-top:10px">Valid votes (auto): <strong id="validSum">0</strong></p>
+          <label for="rPhoto">Photo of result sheet (required)</label>
+          <input id="rPhoto" type="file" accept="image/*" capture="environment" required>
+          <p id="teamProgress" class="muted" aria-live="polite">Enter your polling unit code to see team progress.</p>
+          <img id="photoPreview" class="preview-img" alt="result sheet preview">
+          <p style="margin-top:22px"><button class="btn" type="submit" id="submitResult">Submit my report</button></p>
+        </form>
+      </div>
+      <div class="card">
+        <h3>My submissions</h3>
+        <div id="myList"><p class="muted">No submissions yet.</p></div>
+        <h3 style="margin-top:22px">How cross-checking works</h3>
+        <p class="muted" style="font-size:.9rem">
+          When all reps at your PU enter the same figures → the PU shows <span class="badge green">agreed</span> and the figure is locked into collation.<br><br>
+          If any rep's figures differ → the PU shows <span class="badge red">discrepancy</span>, your collation team reviews the uploaded photos, and contacts the reps before accepting a figure.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+<footer>NaijaPVT — rep portal.</footer>
+<script src="js/store.js"></script>
+<script>
+renderNav("dashboard");
+const gate = document.getElementById("gate"), app = document.getElementById("app");
+const u = getUser();
+if (!u) {
+  gate.innerHTML = '<div class="flash warn">Please <a href="login.html">sign in</a> to access the rep portal.</div>';
+} else {
+  app.style.display = "block";
+  const stateSel = document.getElementById("rState");
+  STATES.forEach(s => stateSel.add(new Option(s, s)));
+  if (u.state) stateSel.value = u.state;
+
+  const box = document.getElementById("partyInputs");
+  box.innerHTML = PARTIES.map(p => `
+    <label style="margin-top:8px">${p}</label>
+    <input class="pvote" data-party="${p}" type="number" min="0" value="0">`).join("");
+  const sumVotes = () => {
+    let v = 0;
+    document.querySelectorAll(".pvote").forEach(i => v += (+i.value || 0));
+    document.getElementById("validSum").textContent = fmt(v);
+    return v;
+  };
+  box.addEventListener("input", sumVotes);
+
+  let photoData = null;
+  document.getElementById("rPhoto").addEventListener("change", e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement("canvas");
+        const scale = Math.min(1, 900 / img.width);
+        c.width = img.width * scale; c.height = img.height * scale;
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        photoData = c.toDataURL("image/jpeg", 0.7);
+        const pv = document.getElementById("photoPreview");
+        pv.src = photoData; pv.style.display = "block";
+      };
+      img.src = rd.result;
+    };
+    rd.readAsDataURL(f);
+  });
+
+  const flash = (msg, cls) => document.getElementById("flash").innerHTML = `<div class="flash ${cls}">${msg}</div>`;
+  const puField = document.getElementById("rPuCode");
+  const submitButton = document.getElementById("submitResult");
+  function refreshSubmissionState(){
+    const code = puField.value.trim().toUpperCase();
+    const reports = code ? getPU(code) : [];
+    const already = code && reports.some(r => r.repEmail === u.email);
+    const full = reports.length >= REPS_PER_PU;
+    submitButton.disabled = Boolean(already || full);
+    submitButton.textContent = already ? "Report already submitted" : full ? "PU reports complete" : "Submit my report";
+    document.getElementById("teamProgress").textContent = code
+      ? `${reports.length} of ${REPS_PER_PU} reports received · ${puStatus(reports).label}`
+      : "Enter your polling unit code to see team progress.";
+  }
+  puField.addEventListener("input", refreshSubmissionState);
+  refreshSubmissionState();
+
+  document.getElementById("resultForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const puCode = document.getElementById("rPuCode").value.trim().toUpperCase();
+    if (!puCode) return flash("Polling unit code is required.", "err");
+    if (!photoData) return flash("Please attach a photo of the posted result sheet.", "err");
+    const votes = {};
+    document.querySelectorAll(".pvote").forEach(i => votes[i.dataset.party] = +i.value || 0);
+    if (Object.values(votes).some(v => !Number.isInteger(v) || v < 0)) return flash("Party votes must be whole numbers of zero or more.", "err");
+    const accredited = +document.getElementById("rAcc").value || 0;
+    const rejected = +document.getElementById("rRej").value || 0;
+    if (sumVotes() + rejected > accredited) return flash("Valid votes plus rejected ballots cannot exceed accredited voters.", "err");
+    const rec = {
+      puCode, state: stateSel.value,
+      lga: document.getElementById("rLga").value.trim(),
+      ward: document.getElementById("rWard").value.trim(),
+      puName: document.getElementById("rPuName").value.trim(),
+      accredited,
+      rejected,
+      validVotes: sumVotes(), votes,
+      imageDataUrl: photoData,
+      repName: u.name, repEmail: u.email,
+      submittedAt: new Date().toISOString()
+    };
+    const res = saveResult(rec);
+    if (!res.ok) return flash(res.msg, "err");
+    const team = getPU(puCode);
+    flash(`Report submitted for <strong>${puCode}</strong>. ${team.length} of ${REPS_PER_PU} reps have now reported at this PU.`, "ok");
+    document.getElementById("resultForm").reset();
+    photoData = null;
+    document.getElementById("photoPreview").style.display = "none";
+    refreshSubmissionState();
+    renderMyList();
+  });
+
+  function renderMyList(){
+    const mine = allRecords().filter(r => r.repEmail === u.email);
+    const el = document.getElementById("myList");
+    if (!mine.length) { el.innerHTML = '<p class="muted">No submissions yet.</p>'; return; }
+    el.innerHTML = mine.map(r => {
+      const team = getPU(r.puCode), st = puStatus(team);
+      return `<div style="border:1px solid #e3efe8;border-radius:12px;padding:14px;margin-bottom:12px">
+        <strong>${r.puName}</strong> <span class="muted">(${r.puCode})</span><br>
+        <span class="muted">${r.state} · ${r.lga} · ${r.ward}</span><br>
+        <span class="badge green">Submitted</span> <span class="badge ${st.cls}">PU: ${st.label}</span>
+        <div class="muted" style="font-size:.8rem;margin-top:4px">${new Date(r.submittedAt).toLocaleString()} · by ${r.repName}</div>
+        ${r.imageDataUrl ? `<img src="${r.imageDataUrl}" style="max-width:100%;border-radius:10px;margin-top:8px">` : ""}
+      </div>`;
+    }).join("");
+  }
+  renderMyList();
+}
+</script>
+</body>
+</html>

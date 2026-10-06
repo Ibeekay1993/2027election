@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compare with INEC — NaijaPVT</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topnav" id="appnav"></header>
+<div class="container">
+  <h2 class="section-title" style="margin-top:10px">PVT vs Official Results (INEC)</h2>
+  <p class="muted" style="margin-bottom:18px">Enter the officially announced result for any state. The system compares it with our cross-verified citizen collation and flags discrepancies (gap &gt; 5% is flagged red). Only PUs where all reps agree are used here.</p>
+  <div class="notice">Prototype limitation: these are raw totals from the PUs represented in this browser, not a weighted projection for the whole state. A statewide comparison is meaningful only after the sample frame and statistical weights are configured.</div>
+  <div class="grid c2">
+    <div class="card">
+      <h3>Enter official result</h3>
+      <form id="offForm">
+        <label>State</label><select id="oState"></select>
+        <div id="offInputs"></div>
+        <p style="margin-top:18px"><button class="btn" type="submit">Save official figures</button></p>
+      </form>
+    </div>
+    <div class="card">
+      <h3>Summary of flags</h3>
+      <div id="flagSummary"><p class="muted">No official figures entered yet.</p></div>
+    </div>
+  </div>
+
+  <h2 class="section-title">State-by-state comparison</h2>
+  <div style="overflow-x:auto"><table id="cmpTable">
+    <thead><tr><th>State</th><th>Party</th><th>PVT votes</th><th>Official</th><th>Difference</th><th>Status</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+</div>
+<footer>NaijaPVT — independent verification.</footer>
+<script src="js/store.js"></script>
+<script>
+renderNav("compare");
+const oState = document.getElementById("oState");
+STATES.forEach(s => oState.add(new Option(s, s)));
+document.getElementById("offInputs").innerHTML =
+  PARTIES.map(p => `<label>${p} (official)</label><input class="oin" data-k="${p}" type="number" min="0" value="0">`).join("");
+
+document.getElementById("offForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const data = {};
+  document.querySelectorAll(".oin").forEach(i => data[i.dataset.k] = +i.value || 0);
+  saveOfficial(oState.value, data);
+  render();
+  alert("Official figures saved for " + oState.value);
+});
+
+function render(){
+  const official = getOfficial();
+  const byState = resultsByState();
+  let rows = "", flags = [], statesWithoutVerifiedData = [];
+  Object.keys(official).forEach(st => {
+    // use only fully-agreed PUs for official comparison
+    const agreed = (byState[st] || []).filter(a => puStatus(a).cls === "green");
+    if (!agreed.length) { statesWithoutVerifiedData.push(st); return; }
+    const t = tallyConsensus(agreed);
+    PARTIES.forEach(p => {
+      const pvt = t.parties[p] || 0, off = official[st][p] || 0;
+      if (!pvt && !off) return;
+      const diff = off - pvt;
+      const pct = off ? (Math.abs(diff)/off*100) : (pvt ? 100 : 0);
+      const status = pct <= 5 ? '<span class="badge green">Match</span>' : (pct <= 15 ? '<span class="badge gold">Watch</span>' : '<span class="badge red">Discrepancy</span>');
+      if (pct > 5) flags.push({ st, p, diff, pct });
+      rows += `<tr><td><strong>${st}</strong></td><td>${p}</td><td>${fmt(pvt)}</td><td>${fmt(off)}</td><td>${diff>0?"+":""}${fmt(diff)}</td><td>${status}</td></tr>`;
+    });
+  });
+  document.querySelector("#cmpTable tbody").innerHTML = rows || '<tr><td colspan="6" class="muted">No verified polling units are available for comparison yet.</td></tr>';
+  document.getElementById("flagSummary").innerHTML = flags.length
+    ? flags.map(f => `<div class="flash ${f.pct>15?"err":"warn"}" style="margin-bottom:10px"><strong>${f.st} — ${f.p}</strong>: ${f.diff > 0 ? "official exceeds PVT" : "PVT exceeds official"} by ${fmt(Math.abs(f.diff))} votes (${f.pct.toFixed(1)}%)</div>`).join("")
+    : statesWithoutVerifiedData.length
+      ? `<p class="muted">No verified PUs to compare for: ${statesWithoutVerifiedData.join(", ")}. No conclusion is available for these states.</p>`
+      : '<p class="muted">No discrepancies above the 5% review threshold in states with verified data.</p>';
+}
+render();
+</script>
+</body>
+</html>

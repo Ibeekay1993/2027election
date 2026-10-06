@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Collation — NaijaPVT</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topnav" id="appnav"></header>
+<div class="container">
+  <h2 class="section-title" style="margin-top:10px">Live Collation Dashboard</h2>
+  <p class="muted" style="margin-bottom:18px">Every polling unit has <strong>3 trained reps</strong> reporting independently. Only identical reports enter the totals; pending and disputed PUs are held out. “Verified” means all three reports match and is not an INEC certification.</p>
+  <div class="grid c3" id="stats"></div>
+
+  <div class="grid c2" style="margin-top:24px">
+    <div class="card">
+      <h3>Party standings (verified polling units only)</h3>
+      <div id="bars"></div>
+    </div>
+    <div class="card">
+      <h3>Rep verification health</h3>
+      <div id="health"></div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Polling units — rep cross-check</h2>
+  <div style="overflow-x:auto">
+  <table id="puTable">
+    <thead><tr><th>PU Code</th><th>Polling unit</th><th>State</th><th>Reps</th><th>Status</th><th>Consensus votes (leading party)</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  </div>
+
+  <h2 class="section-title">Collation by state</h2>
+  <div style="overflow-x:auto">
+  <table id="stateTable">
+    <thead><tr><th>State</th><th>PUs reporting</th><th>Verified PUs</th><th>Reps</th><th>Accredited</th><th>Valid votes</th><th>Leading party</th><th>Lead</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  </div>
+
+  <h2 class="section-title">Photographic evidence</h2>
+  <div class="evidence-grid" id="evidence"></div>
+</div>
+<footer>NaijaPVT — live citizen collation, cross-verified by multiple reps per polling unit.</footer>
+<script src="js/store.js"></script>
+<script>
+renderNav("results");
+const data = getResults();
+const puList = Object.values(data);
+const t = tallyConsensus(puList);
+
+document.getElementById("stats").innerHTML = `
+  <div class="stat"><div class="num">${fmt(t.verifiedPus)}</div><div class="lbl">Verified polling units</div></div>
+  <div class="stat"><div class="num">${fmt(t.valid)}</div><div class="lbl">Verified valid votes</div></div>
+  <div class="stat"><div class="num">${t.accredited ? ((t.valid/t.accredited)*100).toFixed(1) : 0}%</div><div class="lbl">Turnout (valid/accredited)</div></div>`;
+
+document.getElementById("health").innerHTML = `
+  <div class="bar-row"><span class="pname" style="width:120px">Reps reporting</span><span class="pval" style="width:auto">${fmt(t.reported)}</span></div>
+  <div class="bar-row"><span class="pname" style="width:120px">PUs fully agreed</span><span class="pval" style="width:auto;color:#0a6b43;font-weight:800">${t.agreed} / ${t.pus}</span></div>
+  <div class="bar-row"><span class="pname" style="width:120px">Awaiting reports</span><span class="pval" style="width:auto">${t.pending}</span></div>
+  <div class="bar-row"><span class="pname" style="width:120px">Flagged for review</span><span class="pval" style="width:auto;color:#a93226;font-weight:800">${t.variance}</span></div>
+  <p class="muted" style="margin-top:12px;font-size:.85rem">A PU is verified only when all 3 reps submit identical accredited, rejected, and party vote figures. Pending and disputed PUs are excluded from every total.</p>`;
+
+// bars (consensus)
+const entries = PARTIES.map(p => [p, t.parties[p]]).filter(e => e[1] > 0).sort((a,b) => b[1]-a[1]);
+const max = Math.max(...entries.map(e => e[1]), 1);
+const colors = ["#008751","#c0392b","#8e44ad","#e8b93d","#2c3e50","#16a085","#d35400","#2980b9","#c2185b"];
+document.getElementById("bars").innerHTML = entries.map((e,i) => `
+  <div class="bar-row">
+    <span class="pname">${e[0]}</span>
+    <div class="bar-wrap"><div class="bar-fill" style="width:${(e[1]/max*100).toFixed(1)}%;background:${colors[i%colors.length]}"></div></div>
+    <span class="pval">${fmt(e[1])}</span>
+  </div>`).join("");
+
+// PU cross-check table
+document.querySelector("#puTable tbody").innerHTML = puList.map(arr => {
+  const r0 = arr[0], st = puStatus(arr), c = puConsensus(arr);
+  const lead = PARTIES.map(p=>[p,c.votes[p]]).sort((a,b)=>b[1]-a[1])[0];
+  return `<tr>
+    <td><strong>${r0.puCode}</strong></td>
+    <td>${r0.puName}<br><span class="muted" style="font-size:.8rem">${r0.lga} · ${r0.ward}</span></td>
+    <td>${r0.state}</td>
+    <td>${arr.length} / ${REPS_PER_PU}</td>
+    <td><span class="badge ${st.cls}">${st.label}</span></td>
+    <td>${st.cls === "green" ? `${lead[0]} — ${fmt(lead[1])}` : "Excluded until verified"}</td></tr>`;
+}).join("");
+
+// state table
+const byState = resultsByState();
+document.querySelector("#stateTable tbody").innerHTML = Object.keys(byState).sort().map(st => {
+  const ts = tallyConsensus(byState[st]);
+  const lead = Object.entries(ts.parties).sort((a,b)=>b[1]-a[1])[0] || [null,0];
+  return `<tr><td><strong>${st}</strong></td><td>${ts.pus}</td><td>${ts.verifiedPus}</td><td>${ts.reported}</td><td>${fmt(ts.accredited)}</td><td>${fmt(ts.valid)}</td>
+    <td>${lead[0]||"—"}</td><td>${fmt(lead[1])}</td></tr>`;
+}).join("");
+
+// evidence
+const withPhoto = allRecords().filter(r => r.imageDataUrl);
+document.getElementById("evidence").innerHTML = withPhoto.length
+  ? withPhoto.map(r => `<div class="evidence"><img src="${r.imageDataUrl}"><div class="ev-body"><strong>${r.puCode}</strong><br>${r.puName} · ${r.state}<br><span class="muted">by ${r.repName} · ${new Date(r.submittedAt).toLocaleString()}</span></div></div>`).join("")
+  : '<div class="card" style="grid-column:1/-1"><p class="muted">No photographic evidence yet — photos appear here as reps submit through the <a href="dashboard.html">rep portal</a>.</p></div>';
+</script>
+</body>
+</html>

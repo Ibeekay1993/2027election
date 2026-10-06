@@ -10,7 +10,7 @@ const DB = {
 const K_RESULTS = "naijapvt_results_v2";   // { puCode: [ {record, ...} ] }
 const K_USER    = "naijapvt_user";
 const K_OFFICIAL= "naijapvt_official_v2";  // { state: {_acc, APC, PDP, ...} }
-const K_SEEDED  = "naijapvt_seeded_v2";
+
 
 function getResults(){ return DB.read(K_RESULTS, {}); }                    // puCode -> array of submissions
 function getPU(puCode){ return getResults()[puCode] || []; }
@@ -65,45 +65,7 @@ function puStatus(puArr){
   return { cls:"red", label:"Reps disagree — review photos", gap };
 }
 
-// ---- demo seed data ----
-function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
-function seedDemo(){
-  if (localStorage.getItem(K_SEEDED)) return;
-  const rnd = mulberry32(20270225);
-  const pick = arr => arr[Math.floor(rnd()*arr.length)];
-  const sampleStates = ["Lagos","Kano","Rivers","Kaduna","Oyo","FCT","Borno","Anambra","Edo","Plateau","Delta","Katsina","Ogun","Enugu"];
-  const pus = ["Market Square","Primary School I","Town Hall","Health Centre","Secondary School","Community Field","Palace Gate","Market Square II","School Block A","Village Square"];
-  const first = ["Adaeze","Emeka","Fatima","Ibrahim","Chidi","Ngozi","Abubakar","Tunde","Blessing","Musa","Kelechi","Aisha","Olumide","Hauwa","Ifeanyi"];
-  const last = ["Okafor","Bello","Adeyemi","Eze","Mohammed","Obi","Danladi","Adekunle","Nwosu","Garba","Okonkwo","Yusuf","Balogun","Iheanacho","Sule"];
-  const results = {};
-  sampleStates.forEach((st, si) => {
-    const n = 2 + Math.floor(rnd()*3);
-    for (let i=0;i<n;i++){
-      const puCode = st.slice(0,3).toUpperCase()+"-"+String(100+si)+"-"+String(10+i)+"-"+String(1+Math.floor(rnd()*9));
-      results[puCode] = [];
-      const accredited = 120 + Math.floor(rnd()*480);
-      const votes = {}; let used = 0;
-      PARTIES.forEach((p,pi)=>{ const share = pi<PARTIES.length-1 ? Math.floor(rnd()*(accredited*0.35)) : Math.max(0, accredited-used-2); votes[p]=share; used+=share; });
-      if (used > accredited){ const f=accredited/used; PARTIES.forEach(p=>votes[p]=Math.floor(votes[p]*f)); }
-      // REPS_PER_PU reps report; usually they agree, occasionally one rep diverges
-      for (let r=0;r<REPS_PER_PU;r++){
-        const rv = {}; PARTIES.forEach(p=>rv[p]=votes[p]);
-        if (r===2 && rnd()<0.35){ const p=pick(PARTIES.slice(0,4)); rv[p]=Math.max(0,rv[p]+Math.floor(rnd()*40-20)); }
-        results[puCode].push({
-          puCode, state: st, lga: st+" LGA "+(1+Math.floor(rnd()*5)), ward: "Ward "+(1+Math.floor(rnd()*10)),
-          puName: "PU "+puCode.split("-")[3]+" - "+pick(pus),
-          accredited, validVotes: Object.values(rv).reduce((a,b)=>a+b,0), rejected: Math.floor(rnd()*8),
-          votes: rv, imageDataUrl: null,
-          submittedAt: new Date(2027,1,25,9+r+Math.floor(rnd()*6),Math.floor(rnd()*60)).toISOString(),
-          repName: pick(first)+" "+pick(last), repEmail: "rep"+puCode.replace(/-/g,"")+r+"@demo.ng"
-        });
-      }
-    }
-  });
-  DB.write(K_RESULTS, results);
-  localStorage.setItem(K_SEEDED, "1");
-}
-// ---- collation based on CONSENSUS figures per PU ----
+// ---- verified-result collation ----
 function tallyConsensus(list){
   const t = { pus: list.length, verifiedPus:0, reported:0, accredited:0, valid:0, rejected:0, parties:{}, agreed:0, variance:0, pending:0 };
   PARTIES.forEach(p=>t.parties[p]=0);
@@ -134,4 +96,5 @@ function renderNav(active){
     ${u ? `<a href="#" onclick="logout();return false;" style="color:#e8b93d">Logout (${u.name.split(" ")[0]})</a>` : `<a href="login.html" style="color:#e8b93d">Rep Login</a>`}
     </nav></div>`;
 }
-document.addEventListener("DOMContentLoaded", ()=>{ seedDemo(); });
+
+

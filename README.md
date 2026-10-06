@@ -12,7 +12,7 @@ Every rep logs in and independently:
 1. **Types the result figures they witnessed** — votes per party, accredited voters, rejected ballots
 2. **Uploads a photo** of the posted result sheet (Form EC8A)
 
-Each of the three reps can report **only once** per polling unit. The demo refuses duplicate reports from the same account and refuses a fourth report for a PU.
+Each of the three reps can report **only once** per polling unit. The current interface blocks duplicate reports from the same account and a fourth report for a PU.
 
 The system then:
 
@@ -35,11 +35,11 @@ The comparison screen currently shows raw totals for reported PUs. It is not a s
 | `results.html` | Live collation — rep cross-check per PU, consensus standings, state totals, evidence gallery |
 | `compare.html` | Enter official figures per state — auto comparison and discrepancy flags |
 | `css/style.css` | Shared stylesheet |
-| `js/store.js` | Shared data layer + consensus engine + demo seed data |
+| `js/store.js` | Shared data layer + strict consensus engine |
 
 ## Run it
 
-No build step, no server needed for the demo:
+No build step is required to preview the pages locally:
 
 ```bash
 open index.html          # macOS
@@ -51,12 +51,11 @@ xdg-open index.html      # Linux
 
 This is a static site with no build step. In Netlify, import the GitHub repository and set the publish directory to `.` (the project root); leave the build command blank. `netlify.toml` includes the same publish setting. The site can also be deployed by dragging this project folder into Netlify Drop.
 
-Demo seed data (14 states, 3 reps per PU, including deliberate rep disagreements so you can see
-the verification flags) is preloaded. Register rep accounts via `login.html` to try submissions.
+The pages start without fabricated election results. Local preview data is stored in this browser only.
 
-## Project status: front-end prototype
+## Production build status
 
-This is a front-end demonstration, not a live election reporting system. Data and demo accounts live only in one browser's `localStorage`; different reps on different devices do not share reports. The form accepts a PU code but does not authenticate team assignment. Browser storage can be edited or cleared, and must not be used as a security boundary. For production you need:
+The interface currently stores reports and accounts in this browser's `localStorage`; different reps on different devices do not share reports. The form accepts a PU code but does not authenticate team assignment. Browser storage can be edited or cleared, so it is not a production security boundary. Before live collection, connect the shared Supabase service and complete:
 
 - [ ] Central backend database (**Supabase** recommended — fast to ship; Firebase or PostgreSQL + API also fine)
 - [ ] Verified rep accounts (phone OTP + ID check) and PU team assignment

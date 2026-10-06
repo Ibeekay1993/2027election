@@ -1,7 +1,7 @@
 # NaijaPVT production platform — design
 
-**Status:** Proposed for user review  
-**Date:** 2026-10-06  
+**Status:** Proposed for user review
+**Date:** 2026-10-06
 **Scope:** Convert the current static five-page shell and initial SQL draft into a connected, secure, multi-role platform while keeping the public experience short and results-first.
 
 ## 1. Product intent and boundaries
@@ -116,4 +116,3 @@ Ship `/analysis.html` after the verified aggregate API and methodology are estab
 ## 9. Dependencies and limits
 
 The supplied Supabase URL and publishable key can be used as public client configuration. The database URI still contains a password placeholder, so migrations cannot be applied until the actual password is supplied through a secure local/CLI prompt or environment variable. Cloudflare R2 bucket credentials and domain/Worker configuration are also not yet available. Do not write any pasted secret into this spec, `.env.example`, source, command history, logs, or Git. After temporary testing, rotate credentials before production. The current repository contains only a starter schema; it has no connected auth, invitation claim, R2 Worker, admin UI, realtime API, or aggregate cache yet.
-

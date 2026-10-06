@@ -12,18 +12,18 @@ Every rep logs in and independently:
 1. **Types the result figures they witnessed** — votes per party, accredited voters, rejected ballots
 2. **Uploads a photo** of the posted result sheet (Form EC8A)
 
-Each of the three reps can report **only once** per polling unit. The current interface blocks duplicate reports from the same account and a fourth report for a PU.
+In the target workflow, each rep can report **only once** per polling unit. The database migration includes a server-side uniqueness constraint and submission RPC for this rule. The current site does not accept reports; the shared auth and database are not connected.
 
-The system then:
+Once the reporting service is implemented and connected, the system will:
 
-1. **Cross-checks** the reps at each PU against each other:
+1. **Cross-check** the reps at each PU against each other:
    - All three match on accredited voters, rejected ballots, and every party's votes → PU marked **VERIFIED**
    - Any difference → PU **flagged** for the collation team to review the three photos
    - Fewer than three reports → PU stays **PENDING**
-2. **Collates** verified figures only. Pending and disputed PUs are excluded from totals.
-3. **Compares** only verified PUs with entered official figures. Gaps above 5% are flagged for review.
+2. **Collate** verified figures only. Pending and disputed PUs are excluded from totals.
+3. **Compare** only verified PUs with official figures entered through a staff workflow. The intended interface flags gaps above 5% for review.
 
-The comparison screen currently shows raw totals for reported PUs. It is not a statistically weighted estimate of a full state's result; sample-frame configuration and weights are still needed before interpreting it as a statewide comparison.
+Any comparison of raw sample totals would not be a statistically weighted estimate of a full state's result. Sample-frame configuration and weights are still needed before interpreting totals as a statewide comparison.
 
 ## Pages
 

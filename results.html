@@ -2,14 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Collation — NaijaPVT</title>
+<meta name="description" content="Cross-check and collate independent polling-unit reports.">
+<title>Results — NaijaPVT</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to main content</a>
 <header class="topnav" id="appnav"></header>
-<div class="container">
-  <h2 class="section-title" style="margin-top:10px">Live Collation Dashboard</h2>
-  <p class="muted" style="margin-bottom:18px">Every polling unit has <strong>3 trained reps</strong> reporting independently. Only identical reports enter the totals; pending and disputed PUs are held out. “Verified” means all three reports match and is not an INEC certification.</p>
+<main class="container" id="main">
+  <h1 class="section-title" style="margin-top:10px">Results collation</h1>
+  <p class="muted" style="margin-bottom:18px">Each polling unit has <strong>3 assigned reps</strong>. Only identical reports enter the totals; pending and disputed units stay out. “Verified” means all three reports match. It is not an INEC certification.</p>
+  <div class="notice" role="status">The shared reporting database is not connected. No live result totals are available yet.</div>
   <div class="grid c3" id="stats"></div>
 
   <div class="grid c2" style="margin-top:24px">
@@ -41,8 +44,8 @@
 
   <h2 class="section-title">Photographic evidence</h2>
   <div class="evidence-grid" id="evidence"></div>
-</div>
-<footer>NaijaPVT — live citizen collation, cross-verified by multiple reps per polling unit.</footer>
+</main>
+<footer>NaijaPVT · Independent election observation</footer>
 <script src="js/store.js"></script>
 <script>
 renderNav("results");
@@ -78,9 +81,9 @@ document.querySelector("#puTable tbody").innerHTML = puList.map(arr => {
   const r0 = arr[0], st = puStatus(arr), c = puConsensus(arr);
   const lead = PARTIES.map(p=>[p,c.votes[p]]).sort((a,b)=>b[1]-a[1])[0];
   return `<tr>
-    <td><strong>${r0.puCode}</strong></td>
-    <td>${r0.puName}<br><span class="muted" style="font-size:.8rem">${r0.lga} · ${r0.ward}</span></td>
-    <td>${r0.state}</td>
+    <td><strong>${escapeHTML(r0.puCode)}</strong></td>
+    <td>${escapeHTML(r0.puName)}<br><span class="muted" style="font-size:.8rem">${escapeHTML(r0.lga)} · ${escapeHTML(r0.ward)}</span></td>
+    <td>${escapeHTML(r0.state)}</td>
     <td>${arr.length} / ${REPS_PER_PU}</td>
     <td><span class="badge ${st.cls}">${st.label}</span></td>
     <td>${st.cls === "green" ? `${lead[0]} — ${fmt(lead[1])}` : "Excluded until verified"}</td></tr>`;
@@ -91,14 +94,14 @@ const byState = resultsByState();
 document.querySelector("#stateTable tbody").innerHTML = Object.keys(byState).sort().map(st => {
   const ts = tallyConsensus(byState[st]);
   const lead = Object.entries(ts.parties).sort((a,b)=>b[1]-a[1])[0] || [null,0];
-  return `<tr><td><strong>${st}</strong></td><td>${ts.pus}</td><td>${ts.verifiedPus}</td><td>${ts.reported}</td><td>${fmt(ts.accredited)}</td><td>${fmt(ts.valid)}</td>
+  return `<tr><td><strong>${escapeHTML(st)}</strong></td><td>${ts.pus}</td><td>${ts.verifiedPus}</td><td>${ts.reported}</td><td>${fmt(ts.accredited)}</td><td>${fmt(ts.valid)}</td>
     <td>${lead[0]||"—"}</td><td>${fmt(lead[1])}</td></tr>`;
 }).join("");
 
 // evidence
 const withPhoto = allRecords().filter(r => r.imageDataUrl);
 document.getElementById("evidence").innerHTML = withPhoto.length
-  ? withPhoto.map(r => `<div class="evidence"><img src="${r.imageDataUrl}"><div class="ev-body"><strong>${r.puCode}</strong><br>${r.puName} · ${r.state}<br><span class="muted">by ${r.repName} · ${new Date(r.submittedAt).toLocaleString()}</span></div></div>`).join("")
+  ? withPhoto.filter(r => r.imageDataUrl.startsWith("data:image/")).map(r => `<div class="evidence"><img src="${escapeHTML(r.imageDataUrl)}" alt="Result sheet for ${escapeHTML(r.puCode)}"><div class="ev-body"><strong>${escapeHTML(r.puCode)}</strong><br>${escapeHTML(r.puName)} · ${escapeHTML(r.state)}<br><span class="muted">by ${escapeHTML(r.repName)} · ${new Date(r.submittedAt).toLocaleString()}</span></div></div>`).join("")
   : '<div class="card" style="grid-column:1/-1"><p class="muted">No photographic evidence yet — photos appear here as reps submit through the <a href="dashboard.html">rep portal</a>.</p></div>';
 </script>
 </body>

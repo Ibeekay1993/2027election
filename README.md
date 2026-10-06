@@ -29,13 +29,15 @@ The comparison screen currently shows raw totals for reported PUs. It is not a s
 
 | File | Purpose |
 |---|---|
-| `index.html` | Landing page — concept, recruitment model, safeguards, live snapshot |
-| `login.html` | Rep registration / sign-in |
-| `dashboard.html` | Rep portal — type figures + upload photo + submit (once per rep) |
-| `results.html` | Live collation — rep cross-check per PU, consensus standings, state totals, evidence gallery |
+| `index.html` | Landing page — concept, recruitment model, safeguards, service status |
+| `login.html` | Representative access status (authentication is not connected) |
+| `dashboard.html` | Rep portal interface — reporting remains disabled pending the backend |
+| `results.html` | Collation interface — no results are shown until the shared service is connected |
 | `compare.html` | Enter official figures per state — auto comparison and discrepancy flags |
 | `css/style.css` | Shared stylesheet |
-| `js/store.js` | Shared data layer + strict consensus engine |
+| `js/store.js` | UI data facade + strict consensus engine (backend guard is off) |
+| `supabase/migrations/` | PostgreSQL schema, report RPC, RLS, and safe verified-results view |
+| `docs/production-architecture.md` | Service boundaries, security model, and go-live checklist |
 
 ## Run it
 
@@ -51,28 +53,21 @@ xdg-open index.html      # Linux
 
 This is a static site with no build step. In Netlify, import the GitHub repository and set the publish directory to `.` (the project root); leave the build command blank. `netlify.toml` includes the same publish setting. The site can also be deployed by dragging this project folder into Netlify Drop.
 
-The pages start without fabricated election results. Local preview data is stored in this browser only.
+The pages start without fabricated election results. Reporting and account access are intentionally disabled. Do not use this static site to collect live election data.
 
 ## Production build status
 
-The interface currently stores reports and accounts in this browser's `localStorage`; different reps on different devices do not share reports. The form accepts a PU code but does not authenticate team assignment. Browser storage can be edited or cleared, so it is not a production security boundary. Before live collection, connect the shared Supabase service and complete:
-
-- [ ] Central backend database (**Supabase** recommended — fast to ship; Firebase or PostgreSQL + API also fine)
-- [ ] Verified rep accounts (phone OTP + ID check) and PU team assignment
-- [ ] Server-side enforcement of one-report-per-rep-per-PU
-- [ ] Secure image storage (S3 / Cloudinary) with tamper-evident timestamps
-- [ ] HTTPS hosting + role-based access (public dashboards vs rep portal)
-- [ ] Admin panel: approve/recruit reps, assign exactly three reps to each PU, review flagged PUs
-- [ ] Statistical weighting module for projections from the sample
+The current UI does not connect to a shared backend and does not persist reports. An initial Supabase migration is provided as a starting point; it is not a deployed or complete production backend. The migration has not been applied to a project. Before live collection, complete the go-live gates in [the architecture guide](docs/production-architecture.md), including authenticated database calls, an admin workflow, private evidence upload, security review, sampling design, backups, and an operational recovery plan.
 
 ## Suggested roadmap
 
-1. **Connect Supabase** — replace `localStorage` calls in `js/store.js` with Supabase tables
-   (`reps`, `results`, `official`, `pu_teams`)
-2. **Real auth** — Supabase Auth with phone OTP
-3. **Image storage** — Supabase Storage bucket for result-sheet photos
-4. **Deploy frontend** — GitHub Pages / Netlify / Vercel (free tiers)
-5. **Admin panel** — new page for managing reps and reviewing flagged PUs
+1. Review and apply migrations to a separate Supabase development project.
+2. Build Supabase Auth integration and authenticated async data access; never put service-role credentials in the browser.
+3. Build an admin interface with server-validated rep approval, PU assignment, and auditable review/resolution.
+4. Build a constrained upload service for a private Cloudflare R2 evidence bucket.
+5. Connect the public collation view to verified-only database records.
+6. Review statistical sampling and weighting before presenting estimates.
+7. Complete security, accessibility, privacy, load, and disaster-recovery reviews before election operations.
 
 ## Push to GitHub
 

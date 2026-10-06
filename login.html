@@ -1,68 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rep Login — NaijaPVT</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="NaijaPVT representative access and account setup.">
+<title>Representative access — NaijaPVT</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <header class="topnav" id="appnav"></header>
-<div class="container" style="max-width:560px">
-  <h2 class="section-title" style="margin-top:10px">Representative Portal</h2>
-  <div class="notice">Production onboarding requires verified accounts and an approved polling-unit assignment. Connect the authentication service before collecting rep credentials.</div>
-  <div class="card">
-    <h3 id="formTitle">Sign in</h3>
-    <form id="f">
-      <div id="extraFields" style="display:none">
-        <label>Full name</label><input id="name" placeholder="e.g. Adaeze Okafor">
-        <label>Phone (for verification)</label><input id="phone" placeholder="0803 000 0000">
-        <label>State of deployment</label><select id="state"></select>
-      </div>
-      <label>Email</label><input id="email" type="email" required placeholder="you@example.org">
-      <label>Password</label><input id="pw" type="password" required placeholder="••••••••">
-      <p style="margin-top:20px"><button class="btn" type="submit" id="submitBtn">Sign in</button></p>
-      <p class="muted" style="margin-top:12px"><span id="switchLabel">New rep?</span> <a href="#" id="switchLink">Create an account</a></p>
-    </form>
-  </div>
-</div>
-<footer>NaijaPVT — private citizen monitoring platform.</footer>
+<main class="container" id="main" style="max-width:680px">
+  <h1 class="section-title" style="margin-top:10px">Representative access</h1>
+  <section class="card" aria-labelledby="access-title">
+    <h2 id="access-title">Account setup is in progress</h2>
+    <p class="muted" style="margin-top:12px">Rep access will use approved accounts and polling-unit assignments. The shared authentication service is not connected yet, so this page does not collect passwords.</p>
+    <p style="margin-top:20px"><a class="btn" href="index.html">Return to NaijaPVT</a></p>
+  </section>
+</main>
+<footer>NaijaPVT · Independent election observation</footer>
 <script src="js/store.js"></script>
-<script>
-renderNav("dashboard");
-const sel = document.getElementById("state");
-STATES.forEach(s => sel.add(new Option(s, s)));
-let signup = false;
-const users = () => DB.read("naijapvt_users", {});
-
-document.getElementById("switchLink").addEventListener("click", e => {
-  e.preventDefault();
-  signup = !signup;
-  document.getElementById("extraFields").style.display = signup ? "block" : "none";
-  document.getElementById("formTitle").textContent = signup ? "Register as a rep" : "Sign in";
-  document.getElementById("submitBtn").textContent = signup ? "Create account" : "Sign in";
-  document.getElementById("switchLabel").textContent = signup ? "Already registered?" : "New rep?";
-  document.getElementById("switchLink").textContent = signup ? "Sign in" : "Create an account";
-});
-
-document.getElementById("f").addEventListener("submit", e => {
-  e.preventDefault();
-  const email = document.getElementById("email").value.trim().toLowerCase();
-  const pw = document.getElementById("pw").value;
-  const u = users();
-  if (signup) {
-    const name = document.getElementById("name").value.trim();
-    if (!name) return alert("Please enter your full name.");
-    if (u[email]) return alert("This email is already registered. Please sign in.");
-    u[email] = { name, phone: document.getElementById("phone").value, state: sel.value, pw };
-    DB.write("naijapvt_users", u);
-    setUser({ name, email, state: sel.value });
-    location.href = "dashboard.html";
-  } else {
-    if (!u[email] || u[email].pw !== pw) return alert("Invalid email or password.");
-    setUser({ name: u[email].name, email, state: u[email].state });
-    location.href = "dashboard.html";
-  }
-});
-</script>
+<script>renderNav("dashboard");</script>
 </body>
 </html>

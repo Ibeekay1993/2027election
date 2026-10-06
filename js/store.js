@@ -2,6 +2,7 @@
 const STATES = ["Abia","Adamawa","Akwa Ibom","Anambra","Bauchi","Bayelsa","Benue","Borno","Cross River","Delta","Ebonyi","Edo","Ekiti","Enugu","FCT","Gombe","Imo","Jigawa","Kaduna","Kano","Katsina","Kebbi","Kogi","Kwara","Lagos","Nasarawa","Niger","Ogun","Ondo","Osun","Oyo","Plateau","Rivers","Sokoto","Taraba","Yobe","Zamfara"];
 const PARTIES = ["APC","PDP","LP","NNPP","APGA","SDP","ADC","PRP","YPP"];
 const REPS_PER_PU = 3;               // recruitment model: N reps deployed per polling unit
+const BACKEND_READY = false;         // Flip only after Supabase auth, RLS, and RPC are configured.
 
 const DB = {
   read(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch(e){ return d; } },
@@ -12,11 +13,12 @@ const K_USER    = "naijapvt_user";
 const K_OFFICIAL= "naijapvt_official_v2";  // { state: {_acc, APC, PDP, ...} }
 
 
-function getResults(){ return DB.read(K_RESULTS, {}); }                    // puCode -> array of submissions
+function getResults(){ return BACKEND_READY ? DB.read(K_RESULTS, {}) : {}; } // Replace with Supabase service before live use.
 function getPU(puCode){ return getResults()[puCode] || []; }
 function hasSubmitted(puCode, email){ return getPU(puCode).some(r => r.repEmail === email); }
 function allRecords(){ const out=[]; Object.values(getResults()).forEach(a => a.forEach(r => out.push(r))); return out; }
 function saveResult(rec){
+  if (!BACKEND_READY) return { ok:false, msg:"Report submission is unavailable until the shared reporting service is configured." };
   const all = getResults();
   all[rec.puCode] = all[rec.puCode] || [];
   if (all[rec.puCode].some(r => r.repEmail === rec.repEmail))
@@ -25,12 +27,15 @@ function saveResult(rec){
     return { ok:false, msg:"This polling unit already has all 3 reports. Contact the collation team if a correction is needed." };
   all[rec.puCode].push(rec); DB.write(K_RESULTS, all); return { ok:true };
 }
-function getUser(){ return DB.read(K_USER, null); }
-function setUser(u){ DB.write(K_USER, u); }
+function getUser(){ return BACKEND_READY ? DB.read(K_USER, null) : null; }
+function setUser(u){ if (BACKEND_READY) DB.write(K_USER, u); }
 function logout(){ localStorage.removeItem(K_USER); location.href = "login.html"; }
-function getOfficial(){ return DB.read(K_OFFICIAL, {}); }
-function saveOfficial(state, data){ const o = getOfficial(); o[state] = data; DB.write(K_OFFICIAL, o); }
+function getOfficial(){ return BACKEND_READY ? DB.read(K_OFFICIAL, {}) : {}; }
+function saveOfficial(state, data){ if (!BACKEND_READY) return false; const o = getOfficial(); o[state] = data; DB.write(K_OFFICIAL, o); return true; }
 function fmt(n){ return (n||0).toLocaleString("en-NG"); }
+function escapeHTML(value){
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
 
 // ---- strict consensus: only three identical reports are verified ----
 function sameFigures(a,b){
@@ -89,11 +94,11 @@ function resultsByState(){
 function renderNav(active){
   const u = getUser();
   const el = document.getElementById("appnav"); if(!el) return;
-  const links = [["index.html","Home","home"],["results.html","Live Collation","results"],["compare.html","Compare with INEC","compare"],["dashboard.html","Rep Portal","dashboard"]];
+  const links = [["index.html","Home","home"],["results.html","Results","results"],["compare.html","Compare with INEC","compare"],["dashboard.html","Rep Portal","dashboard"]];
   el.innerHTML = `<div class="topnav-inner">
     <a class="brand" href="index.html"><span class="dot"></span>NaijaPVT</a>
     <nav>${links.map(l=>`<a href="${l[0]}" class="${active===l[2]?"active":""}">${l[1]}</a>`).join("")}
-    ${u ? `<a href="#" onclick="logout();return false;" style="color:#e8b93d">Logout (${u.name.split(" ")[0]})</a>` : `<a href="login.html" style="color:#e8b93d">Rep Login</a>`}
+    ${u ? `<a href="#" onclick="logout();return false;" style="color:#e8b93d">Logout (${escapeHTML(String(u.name || "Rep").split(" ")[0])})</a>` : `<a href="login.html" style="color:#e8b93d">Rep Login</a>`}
     </nav></div>`;
 }
 

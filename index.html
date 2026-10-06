@@ -6,27 +6,28 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to main content</a>
 <header class="topnav" id="appnav"></header>
-<div class="container">
+<main class="container" id="main">
   <section class="hero">
-    <h1>Independent monitoring &amp; collation of Nigerian election results — powered by citizens, not government.</h1>
-    <p>NaijaPVT is a private parallel vote tabulation platform. We deploy <strong>multiple trained representatives at each sampled polling unit</strong>. They report results independently and live, upload photographic evidence, and our system cross-checks them against each other before collating — automatically.</p>
+    <h1>Independent election reporting, checked by three people at each polling unit.</h1>
+    <p>NaijaPVT is a citizen-run parallel vote tabulation platform. Each assigned representative records the result they witnessed and submits a photo of the posted result sheet. The system checks all three reports before a polling unit enters collation.</p>
     <p style="margin-top:22px">
       <a class="btn" href="login.html">Become a Rep</a>
-      <a class="btn ghost" href="results.html" style="margin-left:10px">View Live Collation</a>
+      <a class="btn ghost" href="results.html" style="margin-left:10px">View results</a>
     </p>
   </section>
 
-  <div class="notice"><strong>Production launch status:</strong> connect the shared database, verified rep accounts, polling-unit assignments, and secure image storage before collecting live reports.</div>
+  <div class="notice" role="status"><strong>Reporting service:</strong> database and account access are being configured. This site is not accepting live reports yet.</div>
 
   <h2 class="section-title">How it works</h2>
   <div class="grid c2">
     <div class="card">
       <div class="steps">
-        <div class="step"><h3>Recruit &amp; deploy reps</h3><p class="muted">We recruit and vet trained representatives — starting with a 1% sample of Nigeria's polling units, stratified across states, LGAs and wards — and assign <strong>3 reps to each polling unit</strong>, so every result is witnessed and reported independently three times.</p></div>
-        <div class="step"><h3>Live result submission</h3><p class="muted">Each rep types the figures they witnessed (votes per party, accredited voters) and uploads a photograph of the posted result sheet (Form EC8A). Each rep may report <strong>only once</strong> per polling unit.</p></div>
-        <div class="step"><h3>Rep cross-checking</h3><p class="muted">The system automatically compares the 3 reps' figures for the same polling unit. If all three agree → the result is locked as <strong>verified</strong>. If anyone's figures differ → the PU is flagged for your collation team to review the photos and resolve.</p></div>
-        <div class="step"><h3>Automatic collation &amp; comparison</h3><p class="muted">Verified figures roll up automatically into live totals by ward, LGA and state. Our collation is then compared against officially announced results — any mismatch is flagged instantly for investigation.</p></div>
+        <div class="step"><h3>Recruit &amp; deploy reps</h3><p class="muted">The planned sampling approach starts with a 1% stratified sample of Nigeria's polling units. Each selected unit is assigned <strong>3 trained representatives</strong>. The sample size and weights must be validated before results can represent broader totals.</p></div>
+        <div class="step"><h3>Independent result reports</h3><p class="muted">Once account access is connected, each assigned rep will enter the figures they witnessed and upload a photograph of the posted result sheet (Form EC8A). Each rep may report <strong>only once</strong> per polling unit.</p></div>
+        <div class="step"><h3>Rep cross-checking</h3><p class="muted">The planned system compares the 3 reports for each polling unit. Matching figures can qualify for collation; differences are flagged for the collation team to review against the submitted evidence.</p></div>
+        <div class="step"><h3>Collation &amp; comparison</h3><p class="muted">After the shared database and review process are in place, verified figures can roll up by ward, LGA and state. Comparison with officially announced results requires a validated sample frame and statistical weights.</p></div>
       </div>
     </div>
     <div class="card">
@@ -45,17 +46,11 @@
     </div>
   </div>
 
-  <h2 class="section-title">Live snapshot</h2>
-  <div class="grid c3" id="snapshot"></div>
-</div>
+  <h2 class="section-title">Reporting status</h2>
+  <section class="card" aria-live="polite"><h3>Shared results database</h3><p class="muted">Not connected yet. Reports will appear here after secure account access and the shared database are configured.</p></section>
+</main>
 <footer>NaijaPVT — a private citizen-election-monitoring initiative. Independent of INEC and all government bodies. Built for transparency, not politics.</footer>
 <script src="js/store.js"></script>
-<script>renderNav("home");
-  const t = tallyConsensus(Object.values(getResults()));
-  document.getElementById("snapshot").innerHTML = `
-    <div class="stat"><div class="num">${fmt(t.pus)}</div><div class="lbl">Polling units reporting</div></div>
-    <div class="stat"><div class="num">${fmt(t.reported)}</div><div class="lbl">Rep reports received</div></div>
-    <div class="stat"><div class="num">${t.agreed}</div><div class="lbl">PUs fully verified (all reps agree)</div></div>`;
-</script>
+<script>renderNav("home");</script>
 </body>
 </html>

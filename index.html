@@ -9,47 +9,27 @@
 <a class="skip-link" href="#main">Skip to main content</a>
 <header class="topnav" id="appnav"></header>
 <main class="container" id="main">
-  <section class="hero">
-    <h1>Independent election reporting, checked by three people at each polling unit.</h1>
-    <p>NaijaPVT is a citizen-run parallel vote tabulation platform. Each assigned representative records the result they witnessed and submits a photo of the posted result sheet. The system checks all three reports before a polling unit enters collation.</p>
-    <p style="margin-top:22px">
-      <a class="btn" href="login.html">Become a Rep</a>
-      <a class="btn ghost" href="results.html" style="margin-left:10px">View results</a>
-    </p>
+  <section class="home-hero">
+    <p class="eyebrow">Independent election reporting</p>
+    <h1>Polling-unit results, checked by three reps.</h1>
+    <p>Follow reported results and see which polling units have passed cross-checking.</p>
   </section>
 
-  <div class="notice" role="status"><strong>Reporting service:</strong> database and account access are being configured. This site is not accepting live reports yet.</div>
-
-  <h2 class="section-title">How it works</h2>
-  <div class="grid c2">
-    <div class="card">
-      <div class="steps">
-        <div class="step"><h3>Recruit &amp; deploy reps</h3><p class="muted">The planned sampling approach starts with a 1% stratified sample of Nigeria's polling units. Each selected unit is assigned <strong>3 trained representatives</strong>. The sample size and weights must be validated before results can represent broader totals.</p></div>
-        <div class="step"><h3>Independent result reports</h3><p class="muted">Once account access is connected, each assigned rep will enter the figures they witnessed and upload a photograph of the posted result sheet (Form EC8A). Each rep may report <strong>only once</strong> per polling unit.</p></div>
-        <div class="step"><h3>Rep cross-checking</h3><p class="muted">The planned system compares the 3 reports for each polling unit. Matching figures can qualify for collation; differences are flagged for the collation team to review against the submitted evidence.</p></div>
-        <div class="step"><h3>Collation &amp; comparison</h3><p class="muted">After the shared database and review process are in place, verified figures can roll up by ward, LGA and state. Comparison with officially announced results requires a validated sample frame and statistical weights.</p></div>
-      </div>
+  <section class="card reporting-status" aria-live="polite" aria-labelledby="reporting-title">
+    <div>
+      <p class="eyebrow">Reporting status</p>
+      <h2 id="reporting-title">Live reporting is not open yet</h2>
+      <p class="muted">The shared results database and rep accounts are being configured.</p>
     </div>
-    <div class="card">
-      <h3>Why multiple reps per polling unit?</h3>
-      <p class="muted" style="margin-bottom:14px">Three independent reports let the collation team spot differences and review the posted result sheet. Matching reports provide a cross-check; they do not by themselves prove that a result is official or correct.</p>
-      <h3>Platform safeguards</h3>
-      <p class="muted">
-        • 3 reps per polling unit, independent reports compared automatically<br>
-        • One submission per rep — locked after upload<br>
-        • Mandatory photo evidence of the posted result sheet<br>
-        • Timestamped submissions<br>
-        • Reps vetted and trained before deployment<br>
-        • Private platform — not affiliated with INEC or any government body
-      </p>
-      <p style="margin-top:18px"><a class="btn small" href="dashboard.html">Rep Portal →</a></p>
+    <div class="reporting-actions">
+      <a class="btn" href="results.html">View results</a>
+      <a class="rep-link" href="login.html">Rep sign in</a>
     </div>
-  </div>
+  </section>
 
-  <h2 class="section-title">Reporting status</h2>
-  <section class="card" aria-live="polite"><h3>Shared results database</h3><p class="muted">Not connected yet. Reports will appear here after secure account access and the shared database are configured.</p></section>
+  <p class="how-it-works"><strong>How reports are checked:</strong> Three reps report independently. Matching figures are verified; differences go to review against the result-sheet photos.</p>
 </main>
-<footer>NaijaPVT — a private citizen-election-monitoring initiative. Independent of INEC and all government bodies. Built for transparency, not politics.</footer>
+<footer>NaijaPVT is independent of INEC and all government bodies.</footer>
 <script src="js/store.js"></script>
 <script>renderNav("home");</script>
 </body>
